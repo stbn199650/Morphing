@@ -10,17 +10,22 @@ def doCropping(theImage1,theImage2):
     if(isinstance(theImage1,str)):
         img1=cv2.imread(theImage1)
     else:
-        img1=cv2.imdecode(np.fromstring(theImage1.read(), np.uint8),1)
+        #img1=cv2.imdecode(np.fromstring(theImage1.read(), np.uint8),1)
+        img1=cv2.imdecode(np.frombuffer(theImage1.read(), np.uint8),1)
+    
     if(isinstance(theImage2,str)):
         img2=cv2.imread(theImage2)
     else:
-        img2=cv2.imdecode(np.fromstring(theImage2.read(), np.uint8),1)
+        #img2=cv2.imdecode(np.fromstring(theImage2.read(), np.uint8),1)
+        img2=cv2.imdecode(np.frombuffer(theImage2.read(), np.uint8),1)
+    
     size1=img1.shape
     size2=img2.shape
     diff0=(size1[0]-size2[0])//2
     diff1=(size1[1]-size2[1])//2
     avg0=(size1[0]+size2[0])//2
     avg1=(size1[1]+size2[1])//2
+
     if(size1[0]==size2[0] and size1[1]==size2[1]):
         return [img1,img2]
     elif(size1[0]<=size2[0] and size1[1]<=size2[1]):
@@ -62,8 +67,8 @@ def doCroppingHelp(img1,img2):
     else:
         return [img1[:,diff1:avg1],img2[-diff0:avg0,:]]
 
-def makeCorrespondence(thePredictor,theImage1,theImage2):
 
+def makeCorrespondence(thePredictor,theImage1,theImage2):
     # Detect the points of face.
     predictor_path = thePredictor
     detector = dlib.get_frontal_face_detector()
@@ -76,7 +81,6 @@ def makeCorrespondence(thePredictor,theImage1,theImage2):
     list1=[]
     list2=[]
     j=1
-
     for img in imgList:
 
         size=(img.shape[0],img.shape[1])
@@ -126,4 +130,3 @@ def makeCorrespondence(thePredictor,theImage1,theImage2):
 
     return [size,imgList[0],imgList[1],list1,list2,narray]
 
-# makeCorrespondence('shape_predictor_68_face_landmarks.dat','4.jpg','2.jpg')

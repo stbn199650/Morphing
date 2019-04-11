@@ -33,7 +33,6 @@ def morphTriangle(img1, img2, img, t1, t2, t, alpha) :
     t2Rect = []
     tRect = []
 
-
     for i in range(0, 3):
         tRect.append(((t[i][0] - r[0]),(t[i][1] - r[1])))
         t1Rect.append(((t1[i][0] - r1[0]),(t1[i][1] - r1[1])))
@@ -61,52 +60,120 @@ def morphTriangle(img1, img2, img, t1, t2, t, alpha) :
 
 def makeMorphs(theDuration,theFrameRate,theImage1,theImage2,theList1,theList2,theList4,size,theResult):
 
-    totalImages=int(theDuration*theFrameRate)
+	totalImages=int(theDuration*theFrameRate)
 
-    p = Popen(['ffmpeg', '-y', '-f', 'image2pipe', '-r', str(theFrameRate),'-s',str(size[1])+'x'+str(size[0]), '-i', '-', '-c:v', 'libx264', '-crf', '25','-vf','scale=trunc(iw/2)*2:trunc(ih/2)*2','-pix_fmt','yuv420p', theResult], stdin=PIPE)
-    for j in range(0,totalImages):
+	p = Popen(['ffmpeg', '-y', '-f', 'image2pipe', '-r', str(theFrameRate),'-s',str(size[1])+'x'+str(size[0]), '-i', '-', '-c:v', 'libx264', '-crf', '25','-vf','scale=trunc(iw/2)*2:trunc(ih/2)*2','-pix_fmt','yuv420p', theResult], stdin=PIPE)
+	for j in range(0,totalImages):
         
         # Read images
-        img1 = theImage1
-        img2 = theImage2
+		img1 = theImage1
+		img2 = theImage2
 
         # Convert Mat to float data type
-        img1 = np.float32(img1)
-        img2 = np.float32(img2)
+		img1 = np.float32(img1)
+		img2 = np.float32(img2)
 
         # Read array of corresponding points
-        points1 = theList1
-        points2 = theList2
-        points = [];
-        alpha=j/(totalImages-1)
+		points1 = theList1
+		points2 = theList2
+		points = [];
+		alpha=j/(totalImages-1)
 
         # Compute weighted average point coordinates
-        for i in range(0, len(points1)):
-            x = ( 1 - alpha ) * points1[i][0] + alpha * points2[i][0]
-            y = ( 1 - alpha ) * points1[i][1] + alpha * points2[i][1]
-            points.append((x,y))
-
+		for i in range(0, len(points1)):
+			x = ( 1 - alpha ) * points1[i][0] + alpha * points2[i][0]
+			y = ( 1 - alpha ) * points1[i][1] + alpha * points2[i][1]
+			points.append((x,y))
 
         # Allocate space for final output
-        imgMorph = np.zeros(img1.shape, dtype = img1.dtype)
+		imgMorph = np.zeros(img1.shape, dtype = img1.dtype)
 
         # Read triangles from delaunay_output.txt
-        for i in range(len(theList4)):    
-            x = int(theList4[i][0])
-            y = int(theList4[i][1])
-            z = int(theList4[i][2])
+		for i in range(len(theList4)):    
+			x = int(theList4[i][0])
+			y = int(theList4[i][1])
+			z = int(theList4[i][2])
             
-            t1 = [points1[x], points1[y], points1[z]]
-            t2 = [points2[x], points2[y], points2[z]]
-            t = [ points[x], points[y], points[z] ]
+			t1 = [points1[x], points1[y], points1[z]]
+			t2 = [points2[x], points2[y], points2[z]]
+			t = [ points[x], points[y], points[z] ]
 
             # Morph one triangle at a time.
-            morphTriangle(img1, img2, imgMorph, t1, t2, t, alpha)
+			morphTriangle(img1, img2, imgMorph, t1, t2, t, alpha)
 
-        temp_res=cv2.cvtColor(np.uint8(imgMorph),cv2.COLOR_BGR2RGB)
-        res=Image.fromarray(temp_res)
-        res.save(p.stdin,'JPEG')
+		temp_res=cv2.cvtColor(np.uint8(imgMorph),cv2.COLOR_BGR2RGB)
+		res=Image.fromarray(temp_res)
+		res.save(p.stdin,'JPEG')
 
-    p.stdin.close()
-    p.wait()
+	p.stdin.close()
+	p.wait()
+
+def doMorph(j,p,theImg1,theImg2,theList1,theList2,array,totalImages):
+
+	# Read images
+	img1 = theImg1
+	img2 = theImg2
+
+	# Convert Mat to float data type
+	img1 = np.float32(img1)
+	img2 = np.float32(img2)
+
+	# Read array of corresponding points
+	points1 = theList1
+	points2 = theList2
+	points = [];
+	alpha=j/(totalImages-1)
+
+	# Compute weighted average point coordinates
+	for i in range(0, len(points1)):
+		x = ( 1 - alpha ) * points1[i][0] + alpha * points2[i][0]
+		y = ( 1 - alpha ) * points1[i][1] + alpha * points2[i][1]
+		points.append((x,y))
+
+	# Allocate space for final output
+	imgMorph = np.zeros(img1.shape, dtype = img1.dtype)
+
+	# Read triangles from delaunay_output.txt
+	for i in range(len(array)):    
+		x = int(array[i][0])
+		y = int(array[i][1])
+		z = int(array[i][2])
+            
+		t1 = [points1[x], points1[y], points1[z]]
+		t2 = [points2[x], points2[y], points2[z]]
+		t = [ points[x], points[y], points[z] ]
+
+		# Morph one triangle at a time.
+		morphTriangle(img1, img2, imgMorph, t1, t2, t, alpha)
+	
+	temp_res=cv2.cvtColor(np.uint8(imgMorph),cv2.COLOR_BGR2RGB)
+
+	return temp_res
+#    res=Image.fromarray(temp_res)
+#    res.save(p.stdin,'JPEG')
+
+
+def makeMorphs_three(Duration,FrameRate,theImg1,theImg2,theImg3,theImg4,theImg5,theImg6,theList1,theList2,theList3,theList4,theList5,theList6,array,array2,array3,size,Result):
+
+	totalImages=int(Duration*FrameRate)
+
+	p = Popen(['ffmpeg', '-y', '-f', 'image2pipe', '-r', str(FrameRate),'-s',str(size[1])+'x'+str(size[0]), '-i', '-', '-c:v', 'libx264', '-crf', '25','-vf','scale=trunc(iw/2)*2:trunc(ih/2)*2','-pix_fmt','yuv420p', Result], stdin=PIPE)
+	for j in range(0,totalImages):
+		temp_res=doMorph(j,p,theImg1,theImg2,theList1,theList2,array,totalImages)
+		res=Image.fromarray(temp_res)
+		res.save(p.stdin,'JPEG')
+       	 
+	for j in range(0,totalImages):
+		temp_res=doMorph(j,p,theImg3,theImg4,theList3,theList4,array2,totalImages)
+		res=Image.fromarray(temp_res)
+		res.save(p.stdin,'JPEG')
+
+	for j in range(0,totalImages):
+		temp_res=doMorph(j,p,theImg5,theImg6,theList5,theList6,array3,totalImages)
+		res=Image.fromarray(temp_res)
+		res.save(p.stdin,'JPEG')
+
+	p.stdin.close()
+	p.wait()
 #  makeMorphs(0.5,60,'2.jpg','3.jpg')
+

@@ -41,7 +41,8 @@ def makeDelaunay(theSize1,theSize0,theList):
     subdiv = cv2.Subdiv2D(rect);
 
     # Make a points list and a searchable dictionary. 
-    theList=theList.tolist()
+    #theList=theList.tolist()
+    theList=np.array(theList).tolist()
     points=[(int(x[0]),int(x[1])) for x in theList]
     dictionary={x[0]:x[1] for x in list(zip(points,range(76)))}
     # Insert points into subdiv
@@ -54,5 +55,5 @@ def makeDelaunay(theSize1,theSize0,theList):
     # Return the list.
     return list4
 
-# makeDelaunay(1080,1440)
+#  makeDelaunay(1080,1440)
 
